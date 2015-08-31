@@ -3,6 +3,17 @@ name = "sparkline"
 version = "0.1.0"
 authors = ["Joel Pitt <joel@joelpitt.com>"]
 
+description = "unicode sparklines in rust"
+repository = "https://github.com/ferrouswheel/rust-sparkline"
+readme = "README.md"
+keywords = ["data", "term"]
+
+# This is a string description of the license for this package. Currently
+# crates.io will validate the license provided against a whitelist of known
+# license identifiers from http://spdx.org/licenses/. Multiple licenses can
+# be separated with a `/`
+license = "MIT"
+
 [dependencies]
 docopt = "0.6"
 rustc-serialize = "0.3"
