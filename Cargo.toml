@@ -6,3 +6,7 @@ authors = ["Joel Pitt <joel@joelpitt.com>"]
 [dependencies]
 docopt = "0.6"
 rustc-serialize = "0.3"
+
+[[bin]]
+name = "sparkr"
+path = "src/main.rs"

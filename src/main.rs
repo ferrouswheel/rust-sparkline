@@ -9,19 +9,20 @@ use std::env;
 use docopt::Docopt;
 
 const USAGE: &'static str = "
-sparkline
+sparkr
 
 Usage:
-  sparkline [--min=<min>] [--max=<max>] [--theme=<theme>] <values>...
-  sparkline [--min=<min>] [--max=<max>] [--theme=<theme>]
-  sparkline (-h | --help)
-  sparkline --version
+  sparkr [--min=<min>] [--max=<max>] [--theme=<theme>] [--statline] <values>...
+  sparkr [--min=<min>] [--max=<max>] [--theme=<theme>] [--statline] 
+  sparkr (-h | --help)
+  sparkr --version
 
 Options:
   -h --help       Show this screen.
   --version       Show version.
   --min=<min>     Specify minimum value instead of calculating it.
   --max=<max>     Specify maximum value instead of calculating it.
+  --statline      Show a line of stats after the sparkline.
   --theme=<theme>   What theme to use, 'colour' or 'classic' (default).
   <values>        Just values.
 ";
@@ -31,6 +32,7 @@ struct Args {
     pub flag_min: Option<f64>,
     pub flag_max: Option<f64>,
     pub flag_theme: Option<String>,
+    pub flag_statline: bool,
     pub arg_values: Vec<f64>,
 }
 
@@ -66,6 +68,8 @@ fn main() {
     }
     println!("");
 
-    println!("min: {}, max: {}, range: {}", min, max, max-min);
+    if args.flag_statline {
+        println!("min: {}, max: {}, range: {}", min, max, max-min);
+    }
 }
 
