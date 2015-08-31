@@ -11,9 +11,15 @@ pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
     good_numbers
 }
 
-pub fn min_max_for_data (numbers: &Vec<f64>) -> (f64, f64) {
-    let max = numbers.iter().map(|x| x.round() as i64).max().unwrap() as f64;
-    let min = numbers.iter().map(|x| x.round() as i64).min().unwrap() as f64;
+pub fn min_max_for_data (numbers: &Vec<f64>, min_opt: Option<f64>, max_opt: Option<f64>) -> (f64, f64) {
+    let max = match max_opt {
+        Some(m) => m,
+        None => numbers.iter().map(|x| x.round() as i64).max().unwrap() as f64,
+    };
+    let min = match min_opt {
+        Some(m) => m,
+        None => numbers.iter().map(|x| x.round() as i64).min().unwrap() as f64,
+    };
     (min, max)
 }
 

@@ -2,3 +2,7 @@
 name = "sparkline"
 version = "0.1.0"
 authors = ["Joel Pitt <joel@joelpitt.com>"]
+
+[dependencies]
+docopt = "0.6"
+rustc-serialize = "0.3"
