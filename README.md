@@ -1,5 +1,7 @@
 # Sparklines for Rust
 
+[![](http://meritbadge.herokuapp.com/sparkline)](https://crates.io/crates/sparkline)
+
 I needed a project to learn Rust. This is it!
 
 Inspired by https://github.com/holman/spark and https://gist.github.com/stefanv/1371985
