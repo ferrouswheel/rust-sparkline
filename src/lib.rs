@@ -13,6 +13,24 @@ pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
     good_numbers
 }
 
+/// Find the minimum and maximum of a vector of f64 values, but constained by
+/// Option<f64> types for min and max.
+///
+/// ```
+/// use sparkline::*;
+/// let (x, y) = min_max_for_data(&vec![0.0, 1.0, 2.0], None, None);
+/// assert_eq!(x, 0.0);
+/// assert_eq!(y, 2.0);
+/// let (x, y) = min_max_for_data(&vec![0.0, 1.0, 2.0], Some(-1.0), None);
+/// assert_eq!(x, -1.0);
+/// assert_eq!(y, 2.0);
+/// let (x, y) = min_max_for_data(&vec![0.0, 1.0, 2.0], Some(1.0), None);
+/// assert_eq!(x, 1.0);
+/// assert_eq!(y, 2.0);
+/// let (x, y) = min_max_for_data(&vec![0.0, 1.0, 2.0], None, Some(1.5));
+/// assert_eq!(x, 0.0);
+/// assert_eq!(y, 1.5);
+/// ```
 pub fn min_max_for_data (numbers: &Vec<f64>, min_opt: Option<f64>, max_opt: Option<f64>) -> (f64, f64) {
     let max = match max_opt {
         Some(m) => m,
@@ -78,14 +96,17 @@ pub fn select_sparkline(st : SparkThemeName) -> SparkTheme {
 
 
 #[test]
-fn it_works() {
+fn test_sparkline_mapping() {
     use SparkTheme;
     let (min, max) : (f64, f64) = (0.0, 10.0);
     let values = vec![2.0, 3.0, 2.0, 6.0, 9.0];
-    let sparky = select_sparkline(SparkThemeName::Colour);
-    for num in values.iter() {
+    let expected = "▂▃▂▅█".to_string();
+    let sparky = select_sparkline(SparkThemeName::Classic);
+
+    for (num, compare) in values.iter().zip(expected.chars()) {
         let s : &String = sparky.spark(min, max, *num);
-        print!("{} ", s);
+        println!("{}", num);
+        assert_eq!(*s, compare.to_string());
     }
 
 }
