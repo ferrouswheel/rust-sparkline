@@ -55,7 +55,7 @@ fn main() {
     let (min, max) = min_max_for_data(&good_numbers, args.flag_min, args.flag_max);
 
     let theme = match args.flag_theme {
-        Some(ref x) if x == "colour" => SparkThemeName::Color,
+        Some(ref x) if x == "colour" => SparkThemeName::Colour,
         Some(ref x) if x == "classic" => SparkThemeName::Classic,
         Some(ref x) => { println!("Unknown theme {} falling back to classic", x); SparkThemeName::Classic },
         _ => SparkThemeName::Classic,

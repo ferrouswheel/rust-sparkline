@@ -25,7 +25,7 @@ pub fn min_max_for_data (numbers: &Vec<f64>, min_opt: Option<f64>, max_opt: Opti
 
 pub enum SparkThemeName {
     Classic,
-    Color,
+    Colour,
 }
 
 pub struct SparkTheme {
@@ -65,7 +65,7 @@ pub fn select_sparkline(st : SparkThemeName) -> SparkTheme {
                 sparks: sparks.chars().map(|x| x.to_string()).collect()
             }
         },
-        SparkThemeName::Color => {
+        SparkThemeName::Colour => {
             let spark_chars : Vec<String> = sparks.chars().map(|x| colorise(&x.to_string())).collect();
             SparkTheme {
                 sparks: spark_chars
