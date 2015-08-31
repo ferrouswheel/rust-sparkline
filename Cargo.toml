@@ -3,7 +3,7 @@ name = "sparkline"
 version = "0.1.0"
 authors = ["Joel Pitt <joel@joelpitt.com>"]
 
-description = "unicode sparklines in rust"
+description = "unicode sparklines in rust ▁▂▃▄▅▆▇█"
 repository = "https://github.com/ferrouswheel/rust-sparkline"
 readme = "README.md"
 keywords = ["data", "term"]
