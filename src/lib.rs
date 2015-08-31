@@ -1,4 +1,6 @@
-use std::f64;
+extern crate num;
+
+use num::traits::{ Float, ToPrimitive };
 
 pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
     let parsed_numbers = args.iter().map(|ref x| x.parse::<f64>()).collect::<Vec<_>>();
@@ -31,14 +33,14 @@ pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
 /// assert_eq!(x, 0.0);
 /// assert_eq!(y, 1.5);
 /// ```
-pub fn min_max_for_data (numbers: &Vec<f64>, min_opt: Option<f64>, max_opt: Option<f64>) -> (f64, f64) {
+pub fn min_max_for_data<T>(numbers: &Vec<T>, min_opt: Option<T>, max_opt: Option<T>) -> (T, T) where T: Float {
     let max = match max_opt {
         Some(m) => m,
-        None => numbers.iter().fold(f64::NEG_INFINITY, |a, b| a.max(*b)),
+        None => numbers.iter().fold(T::min_value(), |a, b| a.max(*b)),
     };
     let min = match min_opt {
         Some(m) => m,
-        None => numbers.iter().fold(f64::INFINITY, |a, b| a.min(*b)),
+        None => numbers.iter().fold(T::max_value(), |a, b| a.min(*b)),
     };
     (min, max)
 }
@@ -53,15 +55,17 @@ pub struct SparkTheme {
 }
 
 impl SparkTheme {
-    pub fn spark(&self, min : f64, max : f64, num : f64) -> &String {
-        let increments = self.sparks.len() as f64;
+    pub fn spark<T>(&self, min : T, max : T, num : T) -> &String where T : Float{
+        let increments = T::from(self.sparks.len()).unwrap();
 
         let mut proportion = (increments) * ((num - min) / (max - min));
 
         // If num == max, then proportion will be out of bounds, so drop one
-        if proportion == increments { proportion = proportion - 1.0; }
+        if proportion == increments {
+            proportion = proportion - T::one();
+        }
 
-        &self.sparks[proportion as usize]
+        &self.sparks[proportion.to_usize().unwrap()]
     }
 }
 
