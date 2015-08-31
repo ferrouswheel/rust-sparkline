@@ -1,5 +1,6 @@
 # Sparklines for Rust
 
+[![Build Status](https://travis-ci.org/ferrouswheel/rust-sparkline.svg?branch=master)](https://travis-ci.org/ferrouswheel/rust-sparkline)
 [![](http://meritbadge.herokuapp.com/sparkline)](https://crates.io/crates/sparkline)
 
 I needed a project to learn Rust. This is it!
