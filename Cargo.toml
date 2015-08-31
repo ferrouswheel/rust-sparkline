@@ -1,0 +1,4 @@
+[package]
+name = "sparkline"
+version = "0.1.0"
+authors = ["Joel Pitt <joel@joelpitt.com>"]
