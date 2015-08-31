@@ -1,3 +1,5 @@
+use std::f64;
+
 pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
     let parsed_numbers = args.iter().map(|ref x| x.parse::<f64>()).collect::<Vec<_>>();
     let mut good_numbers = Vec::new();
@@ -14,11 +16,11 @@ pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
 pub fn min_max_for_data (numbers: &Vec<f64>, min_opt: Option<f64>, max_opt: Option<f64>) -> (f64, f64) {
     let max = match max_opt {
         Some(m) => m,
-        None => numbers.iter().map(|x| x.round() as i64).max().unwrap() as f64,
+        None => numbers.iter().fold(f64::NEG_INFINITY, |a, b| a.max(*b)),
     };
     let min = match min_opt {
         Some(m) => m,
-        None => numbers.iter().map(|x| x.round() as i64).min().unwrap() as f64,
+        None => numbers.iter().fold(f64::INFINITY, |a, b| a.min(*b)),
     };
     (min, max)
 }
