@@ -77,4 +77,13 @@ pub fn select_sparkline(st : SparkThemeName) -> SparkTheme {
 
 #[test]
 fn it_works() {
+    use SparkTheme;
+    let (min, max) : (f64, f64) = (0.0, 10.0);
+    let values = vec![2.0, 3.0, 2.0, 6.0, 9.0];
+    let sparky = select_sparkline(SparkThemeName::Colour);
+    for num in values.iter() {
+        let s : &String = sparky.spark(min, max, *num);
+        print!("{} ", s);
+    }
+
 }
