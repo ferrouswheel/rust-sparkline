@@ -2,17 +2,10 @@ extern crate num;
 
 use num::traits::{ Float, ToPrimitive };
 
-pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
-    let parsed_numbers = args.iter().map(|ref x| x.parse::<f64>()).collect::<Vec<_>>();
-    let mut good_numbers = Vec::new();
-
-    for (i, result) in parsed_numbers.iter().enumerate() {
-        // Not sure if there is a way to do with without cloning "result"
-        let num : f64 = result.clone().ok().expect(&*format!("Argument \"{}\" was not a number :(", args[i]));
-        good_numbers.push(num);
-    }
-
-    good_numbers
+pub fn parse_numbers (args : &[String]) -> Vec<f64> {
+    args.iter().enumerate().map(|(i, x)| {
+        x.parse::<f64>().ok().expect(&format!("Argument \"{}\" was not a number :(", args[i]))
+    }).collect()
 }
 
 /// Find the minimum and maximum of a vector of f64 values, but constained by
@@ -33,7 +26,7 @@ pub fn parse_numbers (args : &Vec<String>) -> Vec<f64> {
 /// assert_eq!(x, 0.0);
 /// assert_eq!(y, 1.5);
 /// ```
-pub fn min_max_for_data<T>(numbers: &Vec<T>, min_opt: Option<T>, max_opt: Option<T>) -> (T, T) where T: Float {
+pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>) -> (T, T) where T: Float {
     let max = match max_opt {
         Some(m) => m,
         None => numbers.iter().fold(T::min_value(), |a, b| a.max(*b)),
@@ -70,15 +63,15 @@ impl SparkTheme {
     }
 }
 
-fn colorise(x : &String) -> String {
+fn colorise(x : &str) -> String {
     let reset = "\x1B[0m";
     
-    match &**x {
-        "▁"|"▂" => "\x1B[0;32m".to_string() + x + reset,
-        "▃"|"▄" => "\x1B[0;33m".to_string() + x + reset,
-        "▅"|"▆" => "\x1B[0;33m".to_string() + x + reset,
-        "▇"|"█" => "\x1B[0;31m".to_string() + x + reset,
-        _ => x.clone(),
+    match x {
+        "▁"|"▂" => "\x1B[0;32m".to_owned() + x + reset,
+        "▃"|"▄" => "\x1B[0;33m".to_owned() + x + reset,
+        "▅"|"▆" => "\x1B[0;33m".to_owned() + x + reset,
+        "▇"|"█" => "\x1B[0;31m".to_owned() + x + reset,
+        _ => x.to_string(),
     }
 }
 
@@ -105,7 +98,7 @@ fn test_sparkline_mapping() {
     use SparkTheme;
     let (min, max) : (f64, f64) = (0.0, 10.0);
     let values = vec![2.0, 3.0, 2.0, 6.0, 9.0];
-    let expected = "▂▃▂▅█".to_string();
+    let expected = "▂▃▂▅█".to_owned();
     let sparky = select_sparkline(SparkThemeName::Classic);
 
     for (num, compare) in values.iter().zip(expected.chars()) {

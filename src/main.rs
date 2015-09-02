@@ -60,11 +60,10 @@ fn main() {
         for line in stdin.lock().lines() {
             match line {
                 Ok(l) => {
-                    let x : Vec<&str> = l.split(|c: char| c.is_whitespace()).collect();
-                    input_numbers.extend(x.iter()
-                        .filter(|x| **x != "")
-                        .map(|x| x.to_string())
-                        );
+                    input_numbers.extend(
+                        l.split_whitespace()
+                         .filter(|x| !x.is_empty())
+                         .map(|x| x.to_owned()));
                 },
                 Err(_) => {
                     break;
@@ -85,11 +84,10 @@ fn main() {
     };
     let sparky = select_sparkline(theme);
 
-    let gap_vec = match args.flag_gap {
-        Some(x) => std::iter::repeat(" ").take(x).collect::<Vec<_>>(),
-        None => vec![" "],
+    let gap_str : String = match args.flag_gap {
+        Some(x) => std::iter::repeat(" ").take(x).collect(),
+        None => " ".to_owned(),
     };
-    let gap_str: String = gap_vec.into_iter().collect();
     for num in good_numbers.iter() {
         let s = sparky.spark(min, max, *num);
         print!("{}{}", s, gap_str);
