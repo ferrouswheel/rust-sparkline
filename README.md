@@ -36,6 +36,10 @@ Options:
   <values>        Just values.
 ```
 
+Note, if the spark line elements are not bottom-aligned, are irregular spaced,
+or ther overlap one another, try another console font. Using "Menlo Regular" I get
+nicely aligned, fixed-width, elements.
+
 ## library - sparkline
 
 Add this to your `Cargo.toml`:
