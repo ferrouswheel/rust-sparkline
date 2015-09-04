@@ -75,14 +75,14 @@ fn main() {
 
     let (min, max) = min_max_for_data(&good_numbers, args.flag_min, args.flag_max);
 
-    let theme = match args.flag_theme {
-        Some(ref x) if x == "color" => SparkThemeName::Colour,
-        Some(ref x) if x == "colour" => SparkThemeName::Colour,
-        Some(ref x) if x == "classic" => SparkThemeName::Classic,
-        Some(ref x) => { println!("Unknown theme {} falling back to classic", x); SparkThemeName::Classic },
-        _ => SparkThemeName::Classic,
+    let theme_name : &str = match args.flag_theme {
+        Some(ref x) if x == "color" => "colour",
+        Some(ref x) if x == "colour" => &**x,
+        Some(ref x) if x == "classic" => &**x,
+        Some(ref x) => { println!("Unknown theme {} falling back to classic", x); "classic" },
+        _ => "classic",
     };
-    let mut sparky = select_sparkline(theme);
+    let mut sparky = select_sparkline(theme_name);
     sparky.start(min, max);
 
     let gap_str : String = match args.flag_gap {

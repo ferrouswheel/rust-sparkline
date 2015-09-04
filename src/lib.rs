@@ -37,12 +37,6 @@ pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>
     (min.to_f64().unwrap(), max.to_f64().unwrap())
 }
 
-pub enum SparkThemeName {
-    Classic,
-    Colour,
-    Color,
-}
-
 pub trait SparkTheme {
     fn start(&mut self, min : f64, max : f64);
     fn spark(&mut self, num : f64) -> &str;
@@ -99,20 +93,20 @@ fn colorise(x : &str) -> String {
     }
 }
 
-pub fn select_sparkline(st : SparkThemeName) -> Box<SparkTheme> {
+pub fn select_sparkline(st : &str) -> Box<SparkTheme> {
     let sparks = "▁▂▃▄▅▆▇█";
     match st {
-        SparkThemeName::Classic => {
-            Box::new(MappingTheme {
-                min: 0.0, max: 0.0,
-                sparks: sparks.chars().map(|x| x.to_string()).collect()
-            })
-        },
-        SparkThemeName::Colour | SparkThemeName::Color => {
+        "colour" => {
             let spark_chars : Vec<String> = sparks.chars().map(|x| colorise(&x.to_string())).collect();
             Box::new(MappingTheme {
                 min: 0.0, max: 0.0,
                 sparks: spark_chars
+            })
+        },
+        _ => {
+            Box::new(MappingTheme {
+                min: 0.0, max: 0.0,
+                sparks: sparks.chars().map(|x| x.to_string()).collect()
             })
         },
     }
