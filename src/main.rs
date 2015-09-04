@@ -82,16 +82,18 @@ fn main() {
         Some(ref x) => { println!("Unknown theme {} falling back to classic", x); SparkThemeName::Classic },
         _ => SparkThemeName::Classic,
     };
-    let sparky = select_sparkline(theme);
+    let mut sparky = select_sparkline(theme);
+    sparky.start(min, max);
 
     let gap_str : String = match args.flag_gap {
         Some(x) => std::iter::repeat(" ").take(x).collect(),
         None => " ".to_owned(),
     };
     for num in good_numbers.iter() {
-        let s = sparky.spark(min, max, *num);
+        let s = sparky.spark(*num);
         print!("{}{}", s, gap_str);
     }
+    sparky.end();
     println!("");
 
     if args.flag_statline {

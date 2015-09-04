@@ -8,8 +8,7 @@ pub fn parse_numbers (args : &[String]) -> Vec<f64> {
     }).collect()
 }
 
-/// Find the minimum and maximum of a vector of f64 values, but constained by
-/// Option<f64> types for min and max.
+/// Find the minimum and maximum for a slice of Float values.
 ///
 /// ```
 /// use sparkline::*;
@@ -26,7 +25,7 @@ pub fn parse_numbers (args : &[String]) -> Vec<f64> {
 /// assert_eq!(x, 0.0);
 /// assert_eq!(y, 1.5);
 /// ```
-pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>) -> (T, T) where T: Float {
+pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>) -> (f64, f64) where T: Float {
     let max = match max_opt {
         Some(m) => m,
         None => numbers.iter().fold(T::min_value(), |a, b| a.max(*b)),
@@ -35,7 +34,7 @@ pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>
         Some(m) => m,
         None => numbers.iter().fold(T::max_value(), |a, b| a.min(*b)),
     };
-    (min, max)
+    (min.to_f64().unwrap(), max.to_f64().unwrap())
 }
 
 pub enum SparkThemeName {
@@ -44,24 +43,49 @@ pub enum SparkThemeName {
     Color,
 }
 
-pub struct SparkTheme {
-    pub sparks : Vec<String>,
+pub trait SparkTheme {
+    fn start(&mut self, min : f64, max : f64);
+    fn spark(&mut self, num : f64) -> &str;
+    fn end(&mut self) {}
+
+    fn minmax(&self) -> (f64, f64);
+    fn proportion(&self, num : f64) -> f64 {
+        let (min, max) = self.minmax();
+
+        (num - min) / (max - min)
+    }
 }
 
-impl SparkTheme {
-    pub fn spark<T>(&self, min : T, max : T, num : T) -> &String where T : Float{
-        let increments = T::from(self.sparks.len()).unwrap();
+pub struct MappingTheme {
+    pub sparks : Vec<String>,
+    min : f64,
+    max : f64,
+}
 
-        let mut proportion = (increments) * ((num - min) / (max - min));
+impl SparkTheme for MappingTheme {
+    fn start(&mut self, min : f64, max : f64) {
+        self.min = min;
+        self.max = max;
+    }
+
+    fn minmax(&self) -> (f64, f64) {
+        (self.min, self.max)
+    }
+
+    fn spark(&mut self, num : f64) -> &str {
+        let increments = self.sparks.len() as f64;
+
+        let mut proportion = (increments) * self.proportion(num);
 
         // If num == max, then proportion will be out of bounds, so drop one
         if proportion == increments {
-            proportion = proportion - T::one();
+            proportion = proportion - 1.0;
         }
 
         &self.sparks[proportion.to_usize().unwrap()]
     }
 }
+
 
 fn colorise(x : &str) -> String {
     let reset = "\x1B[0m";
@@ -75,19 +99,21 @@ fn colorise(x : &str) -> String {
     }
 }
 
-pub fn select_sparkline(st : SparkThemeName) -> SparkTheme {
+pub fn select_sparkline(st : SparkThemeName) -> Box<SparkTheme> {
     let sparks = "▁▂▃▄▅▆▇█";
     match st {
         SparkThemeName::Classic => {
-            SparkTheme {
+            Box::new(MappingTheme {
+                min: 0.0, max: 0.0,
                 sparks: sparks.chars().map(|x| x.to_string()).collect()
-            }
+            })
         },
         SparkThemeName::Colour | SparkThemeName::Color => {
             let spark_chars : Vec<String> = sparks.chars().map(|x| colorise(&x.to_string())).collect();
-            SparkTheme {
+            Box::new(MappingTheme {
+                min: 0.0, max: 0.0,
                 sparks: spark_chars
-            }
+            })
         },
     }
 }
