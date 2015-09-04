@@ -115,16 +115,16 @@ pub fn select_sparkline(st : &str) -> Box<SparkTheme> {
 
 #[test]
 fn test_sparkline_mapping() {
-    use SparkTheme;
     let (min, max) : (f64, f64) = (0.0, 10.0);
     let values = vec![2.0, 3.0, 2.0, 6.0, 9.0];
     let expected = "▂▃▂▅█".to_owned();
-    let sparky = select_sparkline(SparkThemeName::Classic);
+    let mut sparky = select_sparkline("classic");
 
+    sparky.start(min, max);
     for (num, compare) in values.iter().zip(expected.chars()) {
-        let s : &String = sparky.spark(min, max, *num);
+        let s : &str= sparky.spark(*num);
         println!("{}", num);
-        assert_eq!(*s, compare.to_string());
+        assert_eq!(s, &compare.to_string());
     }
 
 }
