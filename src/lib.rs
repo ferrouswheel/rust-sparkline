@@ -239,8 +239,9 @@ fn test_sparkline_mapping() {
     let mut sparky = select_sparkline("classic");
 
     sparky.start(min, max);
-    for (num, compare) in values.iter().zip(expected.chars()) {
-        let s : &str= sparky.spark(*num);
+    let length = values.len();
+    for (pos, (num, compare)) in values.iter().zip(expected.chars()).enumerate() {
+        let s : &str= sparky.spark(pos, length, *num);
         println!("{}", num);
         assert_eq!(s, &compare.to_string());
     }
