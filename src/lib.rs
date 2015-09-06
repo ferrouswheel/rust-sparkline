@@ -1,6 +1,11 @@
 extern crate num;
+extern crate lodepng;
+extern crate rustc_serialize;
 
 use num::traits::{ Float, ToPrimitive };
+
+//use std::path::Path;
+use rustc_serialize::base64::{self, ToBase64};
 
 pub fn parse_numbers (args : &[String]) -> Vec<f64> {
     args.iter().enumerate().map(|(i, x)| {
@@ -39,7 +44,7 @@ pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>
 
 pub trait SparkTheme {
     fn start(&mut self, min : f64, max : f64);
-    fn spark(&mut self, num : f64) -> &str;
+    fn spark(&mut self, pos: usize, length: usize, num : f64) -> &str;
     fn end(&mut self) {}
 
     fn minmax(&self) -> (f64, f64);
@@ -66,7 +71,7 @@ impl SparkTheme for MappingTheme {
         (self.min, self.max)
     }
 
-    fn spark(&mut self, num : f64) -> &str {
+    fn spark(&mut self, _pos: usize, _length: usize, num : f64) -> &str {
         let increments = self.sparks.len() as f64;
 
         let mut proportion = (increments) * self.proportion(num);
@@ -80,6 +85,116 @@ impl SparkTheme for MappingTheme {
     }
 }
 
+pub struct ImageTheme {
+    min : f64,
+    max : f64,
+    width : usize,
+    height : usize,
+    image : Vec<u8>,
+}
+
+impl ImageTheme {
+    fn new(width: usize, height: usize) -> ImageTheme {
+        return ImageTheme {
+            min: 0.0, max: 0.0,
+            width: width, height: height,
+            image: vec![0; (width * height * 4) as usize]
+        }
+    }
+
+    fn draw_number(&mut self, total_numbers : usize, pos: usize, num: f64) {
+        let segment_size = self.width / total_numbers;
+
+        let (min, max) = self.minmax();
+        let x = (segment_size * pos) as f64;
+        let y = (self.height as f64 / (max - min)) * (num - min);
+
+        let x_i : usize = x as usize;
+        let y_i : usize =
+            if y >= (self.height as f64) {
+                0
+            } else if y < 1.0 {
+                self.height - 1
+            } else {
+                self.height - (y as usize)
+            };
+
+        let colours = [
+            [170u8, 60, 57, 255,],
+            [255u8, 218, 41, 255,],
+            [54u8, 186, 46, 255,]
+            ];
+        let proportion = (num - min) / (max - min);
+        let mut proportion = (colours.len() as f64) * proportion;
+        if proportion == colours.len() as f64 {
+            proportion = proportion - 1.0;
+        }
+        let colour = colours[proportion.to_usize().unwrap()];
+        let h = self.height;
+        self.fill_bar(x_i, x_i + (segment_size - 1), y_i, h - 0, &colour);
+    }
+
+    fn fill_bar(&mut self, x1: usize, x2 : usize, y1 : usize, y2: usize, colour: &[u8; 4] ) {
+        assert!(x1 < x2);
+        assert!(y1 < y2);
+
+
+        for x in (x1 .. x2) {
+            for y in (y1 .. y2) {
+                let pixel_pos = (y * self.width + x) * 4;
+                for (p, c) in colour.iter().enumerate() {
+                    self.image[pixel_pos + p] = *c; 
+                }
+            }
+        }
+    }
+
+}
+
+impl SparkTheme for ImageTheme {
+    fn start(&mut self, min : f64, max : f64) {
+        self.min = min;
+        self.max = max;
+    }
+
+    fn minmax(&self) -> (f64, f64) {
+        (self.min, self.max)
+    }
+
+    fn spark(&mut self, pos: usize, length: usize, num : f64) -> &str {
+        self.draw_number(length, pos, num);
+        return "";
+    }
+
+    fn end(&mut self) {
+        let png_mem = lodepng::encode_memory(&self.image, self.width, self.height, lodepng::LCT_RGBA, 8)
+            .ok()
+            .expect("Failed to generate PNG");
+
+        // This conversion to a Vec is wasteful, but I don't know how to easily iterate on a CVec
+        // or get a u8 array from it.
+        let mut png_array : Vec<u8> = Vec::with_capacity(png_mem.len());
+        for i in (0..png_mem.len()) {
+            png_array.push(*png_mem.get(i).unwrap());
+        }
+
+        // Dump the png to term using iTerm2 extension:
+        // http://www.iterm2.com/images.html
+        print!("\n\x1B]1337;File=inline=1:");
+        print!("{}", png_array.to_base64(base64::STANDARD));
+        println!("\x07");
+
+        // TODO: generally support dumping spark lines to files
+        //let path = &Path::new("write_test.png");
+        // code assumes we are 4 bytes ber pixel
+        //let result = lodepng::encode_file(path, &self.image, self.width, self.height, lodepng::LCT_RGBA, 8);
+
+        //match result {
+            //Ok(_) => println!("ok"),
+            //Err(e) => println!("{}", e),
+        //}
+    }
+}
 
 fn colorise(x : &str) -> String {
     let reset = "\x1B[0m";
@@ -102,6 +217,9 @@ pub fn select_sparkline(st : &str) -> Box<SparkTheme> {
                 min: 0.0, max: 0.0,
                 sparks: spark_chars
             })
+        },
+        "png" => {
+            Box::new(ImageTheme::new(200, 30))
         },
         _ => {
             Box::new(MappingTheme {
