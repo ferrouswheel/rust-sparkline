@@ -120,9 +120,10 @@ impl ImageTheme {
             };
 
         let colours = [
-            [170u8, 60, 57, 255,],
+            [54u8, 186, 46, 255,],
             [255u8, 218, 41, 255,],
-            [54u8, 186, 46, 255,]
+            [255u8, 218, 41, 255,],
+            [220u8, 60, 57, 255,],
             ];
         let proportion = (num - min) / (max - min);
         let mut proportion = (colours.len() as f64) * proportion;
