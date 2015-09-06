@@ -19,6 +19,9 @@ docopt = "0.6"
 rustc-serialize = "0.3"
 num="0.1.27"
 
+[dependencies.lodepng]
+git = "https://github.com/pornel/lodepng-rust.git"
+
 [[bin]]
 name = "sparkr"
 path = "src/main.rs"
