@@ -40,6 +40,9 @@ Note, if the spark line elements are not bottom-aligned, are irregular spaced,
 or ther overlap one another, try another console font. Using "Menlo Regular" I get
 nicely aligned, fixed-width, elements.
 
+If you use iTerm2 then you can use `--theme png` to show the sparkline as an
+[inline image](http://www.iterm2.com/images.html).
+
 ## library - sparkline
 
 Add this to your `Cargo.toml`:

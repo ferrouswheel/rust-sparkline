@@ -25,7 +25,7 @@ Options:
   --max=<max>     Specify maximum value instead of calculating it.
   --gap=<max>     Gap between symbols [default=1]
   --statline      Show a line of stats after the sparkline.
-  --theme=<theme>   What theme to use, 'colour' or 'classic' (default).
+  --theme=<theme>   What theme to use, 'colour', 'png', or 'classic' (default).
   <values>        Just values.
 ";
 
