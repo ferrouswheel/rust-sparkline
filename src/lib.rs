@@ -3,6 +3,7 @@ extern crate lodepng;
 extern crate rustc_serialize;
 
 use num::traits::{ Float, ToPrimitive };
+use std::path::{self, Path};
 
 //use std::path::Path;
 use rustc_serialize::base64::{self, ToBase64};
@@ -42,8 +43,10 @@ pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>
     (min.to_f64().unwrap(), max.to_f64().unwrap())
 }
 
-pub trait SparkTheme {
-    fn start(&mut self, min : f64, max : f64);
+pub trait SparkTheme<'b> {
+    fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool;
+
+    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, file : Option<&'b Path>);
     fn spark(&mut self, pos: usize, length: usize, num : f64) -> &str;
     fn end(&mut self) {}
 
@@ -55,16 +58,28 @@ pub trait SparkTheme {
     }
 }
 
-pub struct MappingTheme {
+pub struct MappingTheme<'t> {
     pub sparks : Vec<String>,
     min : f64,
     max : f64,
+    output : Option<OutputType>,
+    out_file : Option<&'t Path>,
 }
 
-impl SparkTheme for MappingTheme {
-    fn start(&mut self, min : f64, max : f64) {
+#[derive(Copy, Clone, Debug, RustcDecodable)]
+pub enum OutputType { File, Pipe, Console }
+
+
+impl<'t> SparkTheme<'t> for MappingTheme<'t> {
+    fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool {
+        true
+    }
+
+    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, file : Option<&'t Path>) {
         self.min = min;
         self.max = max;
+        self.output = output;
+        self.out_file = file;
     }
 
     fn minmax(&self) -> (f64, f64) {
@@ -85,20 +100,24 @@ impl SparkTheme for MappingTheme {
     }
 }
 
-pub struct ImageTheme {
+pub struct ImageTheme<'t> {
     min : f64,
     max : f64,
     width : usize,
     height : usize,
     image : Vec<u8>,
+    output : Option<OutputType>,
+    out_file : Option<&'t Path>,
 }
 
-impl ImageTheme {
-    fn new(width: usize, height: usize) -> ImageTheme {
+impl<'t> ImageTheme<'t> {
+    fn new(width: usize, height: usize) -> ImageTheme<'t> {
         return ImageTheme {
             min: 0.0, max: 0.0,
             width: width, height: height,
-            image: vec![0; (width * height * 4) as usize]
+            image: vec![0; (width * height * 4) as usize],
+            output: None,
+            out_file: None,
         }
     }
 
@@ -152,10 +171,16 @@ impl ImageTheme {
 
 }
 
-impl SparkTheme for ImageTheme {
-    fn start(&mut self, min : f64, max : f64) {
+impl<'t> SparkTheme<'t> for ImageTheme<'t> {
+    fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool {
+        true
+    }
+
+    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, file : Option<&'t Path>) {
         self.min = min;
         self.max = max;
+        self.output = output;
+        self.out_file = file;
     }
 
     fn minmax(&self) -> (f64, f64) {
@@ -209,14 +234,16 @@ fn colorise(x : &str) -> String {
     }
 }
 
-pub fn select_sparkline(st : &str) -> Box<SparkTheme> {
+pub fn select_sparkline<'a>(st : &'a str) -> Box<SparkTheme + 'a> {
     let sparks = "▁▂▃▄▅▆▇█";
     match st {
         "colour" => {
             let spark_chars : Vec<String> = sparks.chars().map(|x| colorise(&x.to_string())).collect();
             Box::new(MappingTheme {
                 min: 0.0, max: 0.0,
-                sparks: spark_chars
+                sparks: spark_chars,
+                output: None,
+                out_file: None
             })
         },
         "png" => {
@@ -225,7 +252,9 @@ pub fn select_sparkline(st : &str) -> Box<SparkTheme> {
         _ => {
             Box::new(MappingTheme {
                 min: 0.0, max: 0.0,
-                sparks: sparks.chars().map(|x| x.to_string()).collect()
+                sparks: sparks.chars().map(|x| x.to_string()).collect(),
+                output: None,
+                out_file: None
             })
         },
     }
@@ -239,7 +268,7 @@ fn test_sparkline_mapping() {
     let expected = "▂▃▂▅█".to_owned();
     let mut sparky = select_sparkline("classic");
 
-    sparky.start(min, max);
+    sparky.start(min, max, None, None);
     let length = values.len();
     for (pos, (num, compare)) in values.iter().zip(expected.chars()).enumerate() {
         let s : &str= sparky.spark(pos, length, *num);
