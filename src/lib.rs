@@ -3,7 +3,6 @@ extern crate lodepng;
 extern crate rustc_serialize;
 
 use num::traits::{ Float, ToPrimitive };
-use std::path::{self, Path};
 use std::io::Write;
 
 //use std::path::Path;
@@ -82,7 +81,16 @@ impl SparkTheme for MappingTheme {
     }
 
     fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool {
-        true
+        let combo = (ot, file);
+        match combo {
+            (Some(OutputType::File), &Some(_)) => true,
+            (Some(OutputType::File), &None) => true,
+            (Some(OutputType::Pipe), &None) => true,
+            (Some(OutputType::Console), &None) => true,
+            (Some(_), &Some(_)) => false,
+            (None, &Some(_)) => true,
+            (None, &None) => true,
+        }
     }
 
     fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, out: Box<Write>) {
@@ -200,12 +208,12 @@ impl SparkTheme for ImageTheme {
     fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool {
         let combo = (ot, file);
         match combo {
-            (Some(OutputType::File), &Some(ref x)) => true,
+            (Some(OutputType::File), &Some(_)) => true,
             (Some(OutputType::File), &None) => true,
             (Some(OutputType::Pipe), &None) => true,
             (Some(OutputType::Console), &None) => true,
             (Some(_), &Some(_)) => false,
-            (None, &Some(_)) => false,
+            (None, &Some(_)) => true,
             (None, &None) => true,
         }
     }
@@ -303,8 +311,9 @@ fn test_sparkline_mapping() {
     let values = vec![2.0, 3.0, 2.0, 6.0, 9.0];
     let expected = "▂▃▂▅█".to_owned();
     let mut sparky = select_sparkline("classic");
+    let out_stream = Box::new(std::io::stdout());
 
-    sparky.start(min, max, None, None);
+    sparky.start(min, max, None, out_stream);
     let length = values.len();
     for (pos, (num, compare)) in values.iter().zip(expected.chars()).enumerate() {
         let s : &str= sparky.spark(pos, length, *num);
