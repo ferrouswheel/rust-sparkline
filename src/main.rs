@@ -6,10 +6,10 @@ extern crate num;
 use sparkline::*;
 
 use std::io;
-use std::fs::File;
 use std::io::BufRead;
 use std::io::Write;
-use std::path::{self,Path};
+use std::fs::File;
+use std::path::Path;
 
 use docopt::Docopt;
 
@@ -47,7 +47,7 @@ struct Args {
 }
 
 fn main() {
-    let args: Args = Docopt::new(USAGE)
+    let mut args: Args = Docopt::new(USAGE)
                             .and_then(|d| d.decode())
                             .unwrap_or_else(|e| e.exit());
 
@@ -82,36 +82,36 @@ fn main() {
         Some(ref x) => { println!("Unknown theme {} falling back to classic", x); "classic" },
         _ => "classic",
     };
+    let mut default_fn = "sparkline.".to_owned();
     let mut sparky = select_sparkline(theme_name);
+    default_fn.push_str(&(sparky.file_ext().to_owned()));
+    println!("theme name {}", sparky.name());
+
     {
         match sparky.validate_output_options(args.flag_out, &args.flag_file) {
             false => {
-                println!("Bad combination of output type and filename");
-                panic!("eek")
+                panic!("Bad combination of output type and filename for {}", sparky.name())
             },
             _ => (),
         };
         let path = match args.flag_file {
-            Some(ref x) => Some(Path::new(x)),
-            None => None,
+            Some(ref x) => {
+                // Filename specified on command line implies OutputType::File
+                args.flag_out = Some(OutputType::File);
+                Some(Path::new(x))
+            },
+            None => Some(Path::new(&*default_fn)),
         };
-        // Need to move this into the SparkTheme trait, an implementation
-        // should be able to decide if a combination of path and OutputType
-        // makes sense (or if a path is required)
-        //let path = match combo {
-            //(Some(OutputType::File), Some(ref x)) => Some(Path::new(x)),
-            //(Some(OutputType::File), None) => None,
-            //(Some(OutputType::Pipe), None) => None,
-            //(Some(OutputType::Console), None) => None,
-            //(Some(_), Some(_)) => None,
-            //(None, Some(_)) => None,
-            //(None, None) => None,
-        //};
-        println!("Output filename is {:?}", path);
-        //let p = path.unwrap();
-        //let mut f = File::create(p).unwrap();
-        //f.write_all(b"Hello, world!");
-        sparky.start(min, max, args.flag_out, path);
+        let output_stream : Box<Write> = match args.flag_out {
+            Some(OutputType::File) => {
+                println!("Output filename is {:?}", path);
+                let p = path.unwrap();
+                Box::new(File::create(p).unwrap())
+            },
+            _ =>
+                Box::new(std::io::stdout())
+        };
+        sparky.start(min, max, args.flag_out, output_stream);
 
         let gap_str : String = match args.flag_gap {
             Some(x) => std::iter::repeat(" ").take(x).collect(),
@@ -120,13 +120,14 @@ fn main() {
         let length = good_numbers.len();
         for (i, num) in good_numbers.iter().enumerate() {
             let s = sparky.spark(i, length, *num);
-            print!("{}{}", s, match s {
+            print!("{}", match s {
                 "" => "",
                 _ => &*gap_str,
             })
         }
         sparky.end();
     }
+
     println!("");
 
     if args.flag_statline {

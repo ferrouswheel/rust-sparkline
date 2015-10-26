@@ -4,6 +4,7 @@ extern crate rustc_serialize;
 
 use num::traits::{ Float, ToPrimitive };
 use std::path::{self, Path};
+use std::io::Write;
 
 //use std::path::Path;
 use rustc_serialize::base64::{self, ToBase64};
@@ -43,10 +44,14 @@ pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>
     (min.to_f64().unwrap(), max.to_f64().unwrap())
 }
 
-pub trait SparkTheme<'b> {
+pub trait SparkTheme {
+    fn name(&self) -> &'static str;
+    fn file_ext(&self) -> &'static str {
+        "txt"
+    }
     fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool;
 
-    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, file : Option<&'b Path>);
+    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, out: Box<Write>);
     fn spark(&mut self, pos: usize, length: usize, num : f64) -> &str;
     fn end(&mut self) {}
 
@@ -58,28 +63,33 @@ pub trait SparkTheme<'b> {
     }
 }
 
-pub struct MappingTheme<'t> {
+pub struct MappingTheme {
     pub sparks : Vec<String>,
+    name : &'static str,
     min : f64,
     max : f64,
     output : Option<OutputType>,
-    out_file : Option<&'t Path>,
+    out : Option<Box<Write>>,
 }
 
 #[derive(Copy, Clone, Debug, RustcDecodable)]
 pub enum OutputType { File, Pipe, Console }
 
 
-impl<'t> SparkTheme<'t> for MappingTheme<'t> {
+impl SparkTheme for MappingTheme {
+    fn name(&self) -> &'static str {
+        return self.name;
+    }
+
     fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool {
         true
     }
 
-    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, file : Option<&'t Path>) {
+    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, out: Box<Write>) {
         self.min = min;
         self.max = max;
         self.output = output;
-        self.out_file = file;
+        self.out = Some(out);
     }
 
     fn minmax(&self) -> (f64, f64) {
@@ -96,28 +106,35 @@ impl<'t> SparkTheme<'t> for MappingTheme<'t> {
             proportion = proportion - 1.0;
         }
 
+        let index = proportion.to_usize().unwrap();
+        let next_char = self.sparks[index].clone().into_bytes();
+        match self.out {
+            Some(ref mut out) => { out.write(&next_char[..]).ok().expect("you crazy"); },
+            None => (),
+        }
+
         &self.sparks[proportion.to_usize().unwrap()]
     }
 }
 
-pub struct ImageTheme<'t> {
+pub struct ImageTheme {
     min : f64,
     max : f64,
     width : usize,
     height : usize,
     image : Vec<u8>,
     output : Option<OutputType>,
-    out_file : Option<&'t Path>,
+    out : Option<Box<Write>>,
 }
 
-impl<'t> ImageTheme<'t> {
-    fn new(width: usize, height: usize) -> ImageTheme<'t> {
+impl ImageTheme {
+    fn new(width: usize, height: usize) -> ImageTheme {
         return ImageTheme {
             min: 0.0, max: 0.0,
             width: width, height: height,
             image: vec![0; (width * height * 4) as usize],
             output: None,
-            out_file: None,
+            out: None,
         }
     }
 
@@ -171,16 +188,33 @@ impl<'t> ImageTheme<'t> {
 
 }
 
-impl<'t> SparkTheme<'t> for ImageTheme<'t> {
-    fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool {
-        true
+impl SparkTheme for ImageTheme {
+    fn name(&self) -> &'static str {
+        "png"
     }
 
-    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, file : Option<&'t Path>) {
+    fn file_ext(&self) -> &'static str {
+        "png"
+    }
+
+    fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool {
+        let combo = (ot, file);
+        match combo {
+            (Some(OutputType::File), &Some(ref x)) => true,
+            (Some(OutputType::File), &None) => true,
+            (Some(OutputType::Pipe), &None) => true,
+            (Some(OutputType::Console), &None) => true,
+            (Some(_), &Some(_)) => false,
+            (None, &Some(_)) => false,
+            (None, &None) => true,
+        }
+    }
+
+    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, out: Box<Write>) {
         self.min = min;
         self.max = max;
         self.output = output;
-        self.out_file = file;
+        self.out = Some(out);
     }
 
     fn minmax(&self) -> (f64, f64) {
@@ -241,9 +275,10 @@ pub fn select_sparkline<'a>(st : &'a str) -> Box<SparkTheme + 'a> {
             let spark_chars : Vec<String> = sparks.chars().map(|x| colorise(&x.to_string())).collect();
             Box::new(MappingTheme {
                 min: 0.0, max: 0.0,
+                name: "colour",
                 sparks: spark_chars,
                 output: None,
-                out_file: None
+                out: None
             })
         },
         "png" => {
@@ -251,10 +286,11 @@ pub fn select_sparkline<'a>(st : &'a str) -> Box<SparkTheme + 'a> {
         },
         _ => {
             Box::new(MappingTheme {
+                name: "classic",
                 min: 0.0, max: 0.0,
                 sparks: sparks.chars().map(|x| x.to_string()).collect(),
                 output: None,
-                out_file: None
+                out: None
             })
         },
     }
