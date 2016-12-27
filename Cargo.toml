@@ -8,11 +8,7 @@ repository = "https://github.com/ferrouswheel/rust-sparkline"
 readme = "README.md"
 keywords = ["data", "term"]
 
-# This is a string description of the license for this package. Currently
-# crates.io will validate the license provided against a whitelist of known
-# license identifiers from http://spdx.org/licenses/. Multiple licenses can
-# be separated with a `/`
-license = "MIT"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 docopt = "0.6"
