@@ -1,6 +1,6 @@
 [package]
 name = "sparkline"
-version = "0.1.1"
+version = "1.0.0"
 authors = ["Joel Pitt <joel@joelpitt.com>"]
 
 description = "unicode sparklines in rust ▁▂▃▄▅▆▇█"
@@ -13,10 +13,18 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 docopt = "0.6"
 rustc-serialize = "0.3"
-num="0.1.27"
+num = "0.1.27"
 
-[dependencies.lodepng]
-git = "https://github.com/pornel/lodepng-rust.git"
+[target.'cfg(unix)'.dependencies]
+lodepng = "0.11"
+
+#[dependencies.lodepng]
+#git = "https://github.com/pornel/lodepng-rust.git"
+
+[features]
+# no features by default
+default = []
+
 
 [[bin]]
 name = "sparkr"

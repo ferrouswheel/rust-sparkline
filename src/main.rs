@@ -85,7 +85,7 @@ fn main() {
     let mut default_fn = "sparkline.".to_owned();
     let mut sparky = select_sparkline(theme_name);
     default_fn.push_str(&(sparky.file_ext().to_owned()));
-    println!("theme name {}", sparky.name());
+    //println!("theme name {}", sparky.name());
 
     {
         match sparky.validate_output_options(args.flag_out, &args.flag_file) {
