@@ -7,9 +7,11 @@ description = "unicode sparklines in rust ▁▂▃▄▅▆▇█"
 repository = "https://github.com/ferrouswheel/rust-sparkline"
 readme = "README.md"
 keywords = ["data", "term"]
-crate-type = ["dylib"]
-
 license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["rlib"]
+
 
 [dependencies]
 docopt = "0.6"
