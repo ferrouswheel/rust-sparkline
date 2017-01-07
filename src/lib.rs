@@ -5,18 +5,43 @@ extern crate rustc_serialize;
 use num::traits::{ Float, ToPrimitive };
 use std::io::Write;
 
-//use std::path::Path;
-use rustc_serialize::base64::{self, ToBase64};
 
-pub fn parse_numbers (args : &[String]) -> Vec<f64> {
-    args.iter().enumerate().map(|(i, x)| {
-        x.parse::<f64>().ok().expect(&format!("Argument \"{}\" was not a number :(", args[i]))
-    }).collect()
+pub mod types {
+    use std::io::Write;
+
+    #[derive(Copy, Clone, Debug, RustcDecodable)]
+    pub enum OutputType { File, Pipe, Console }
+
+    pub trait SparkTheme {
+        fn name(&self) -> &'static str;
+        fn file_ext(&self) -> &'static str {
+            "txt"
+        }
+        fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool;
+
+        fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, out: Box<Write>);
+        fn spark(&mut self, pos: usize, length: usize, num : f64) -> &str;
+        fn end(&mut self) {}
+
+        fn minmax(&self) -> (f64, f64);
+        fn proportion(&self, num : f64) -> f64 {
+            let (min, max) = self.minmax();
+
+            (num - min) / (max - min)
+        }
+    }
+
 }
 
 #[cfg(unix)]
-pub mod sparkimage {
+mod sparkimage {
     extern crate lodepng;
+    use types::OutputType;
+    use types::SparkTheme;
+    use rustc_serialize::base64::{self, ToBase64};
+    use num::traits::ToPrimitive;
+    use std::io::Write;
+
     pub struct ImageTheme {
         min : f64,
         max : f64,
@@ -28,7 +53,7 @@ pub mod sparkimage {
     }
 
     impl ImageTheme {
-        fn new(width: usize, height: usize) -> ImageTheme {
+        pub fn new(width: usize, height: usize) -> ImageTheme {
             return ImageTheme {
                 min: 0.0, max: 0.0,
                 width: width, height: height,
@@ -76,8 +101,8 @@ pub mod sparkimage {
             assert!(y1 < y2);
 
 
-            for x in (x1 .. x2) {
-                for y in (y1 .. y2) {
+            for x in x1 .. x2 {
+                for y in y1 .. y2 {
                     let pixel_pos = (y * self.width + x) * 4;
                     for (p, c) in colour.iter().enumerate() {
                         self.image[pixel_pos + p] = *c; 
@@ -134,7 +159,7 @@ pub mod sparkimage {
             // This conversion to a Vec is wasteful, but I don't know how to easily iterate on a CVec
             // or get a u8 array from it.
             let mut png_array : Vec<u8> = Vec::with_capacity(png_mem.len());
-            for i in (0..png_mem.len()) {
+            for i in 0 .. png_mem.len() {
                 png_array.push(*png_mem.get(i).unwrap());
             }
 
@@ -156,6 +181,15 @@ pub mod sparkimage {
         }
     }
 }
+
+use types::{OutputType, SparkTheme};
+
+pub fn parse_numbers (args : &[String]) -> Vec<f64> {
+    args.iter().enumerate().map(|(i, x)| {
+        x.parse::<f64>().ok().expect(&format!("Argument \"{}\" was not a number :(", args[i]))
+    }).collect()
+}
+
 
 /// Find the minimum and maximum for a slice of Float values.
 ///
@@ -186,25 +220,6 @@ pub fn min_max_for_data<T>(numbers: &[T], min_opt: Option<T>, max_opt: Option<T>
     (min.to_f64().unwrap(), max.to_f64().unwrap())
 }
 
-pub trait SparkTheme {
-    fn name(&self) -> &'static str;
-    fn file_ext(&self) -> &'static str {
-        "txt"
-    }
-    fn validate_output_options(&self, ot : Option<OutputType>, file : &Option<String>) -> bool;
-
-    fn start(&mut self, min : f64, max : f64, output : Option<OutputType>, out: Box<Write>);
-    fn spark(&mut self, pos: usize, length: usize, num : f64) -> &str;
-    fn end(&mut self) {}
-
-    fn minmax(&self) -> (f64, f64);
-    fn proportion(&self, num : f64) -> f64 {
-        let (min, max) = self.minmax();
-
-        (num - min) / (max - min)
-    }
-}
-
 pub struct MappingTheme {
     pub sparks : Vec<String>,
     name : &'static str,
@@ -213,9 +228,6 @@ pub struct MappingTheme {
     output : Option<OutputType>,
     out : Option<Box<Write>>,
 }
-
-#[derive(Copy, Clone, Debug, RustcDecodable)]
-pub enum OutputType { File, Pipe, Console }
 
 
 impl SparkTheme for MappingTheme {
@@ -311,7 +323,7 @@ pub fn select_sparkline<'a>(st : &'a str) -> Box<SparkTheme + 'a> {
     }
 }
 
-#[cfg(windows)]
+#[cfg(not(unix))]
 pub fn select_sparkline<'a>(st : &'a str) -> Box<SparkTheme + 'a> {
     let sparks = "▁▂▃▄▅▆▇█";
     match st {

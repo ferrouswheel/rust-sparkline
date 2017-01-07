@@ -40,7 +40,7 @@ struct Args {
     pub flag_max: Option<f64>,
     pub flag_gap: Option<usize>,
     pub flag_theme: Option<String>,
-    pub flag_out: Option<OutputType>,
+    pub flag_out: Option<types::OutputType>,
     pub flag_file: Option<String>,
     pub flag_statline: bool,
     pub arg_values: Vec<f64>,
@@ -97,13 +97,13 @@ fn main() {
         let path = match args.flag_file {
             Some(ref x) => {
                 // Filename specified on command line implies OutputType::File
-                args.flag_out = Some(OutputType::File);
+                args.flag_out = Some(types::OutputType::File);
                 Some(Path::new(x))
             },
             None => Some(Path::new(&*default_fn)),
         };
         let output_stream : Box<Write> = match args.flag_out {
-            Some(OutputType::File) => {
+            Some(types::OutputType::File) => {
                 println!("Output filename is {:?}", path);
                 let p = path.unwrap();
                 Box::new(File::create(p).unwrap())

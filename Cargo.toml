@@ -17,10 +17,11 @@ crate-type = ["rlib"]
 docopt = "0.6"
 rustc-serialize = "0.3"
 num = "0.1"
-
-[target.'cfg(unix)'.dependencies]
+# Can't rely on [target.'cfg(unix)'.dependencies] because it errors out
 lodepng = "0.12.4"
-#lodepng = { git = "https://github.com/pornel/lodepng-rust.git" }
+
+#[target.'cfg(unix)'.dependencies]
+#lodepng = "0.12.4"
 
 #[dependencies.lodepng]
 #git = "https://github.com/pornel/lodepng-rust.git"
